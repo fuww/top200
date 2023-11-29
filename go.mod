@@ -1,4 +1,4 @@
-module github.com/fuww/top100
+module github.com/fuww/top200
 
 go 1.20
 
@@ -9,7 +9,9 @@ require (
 
 require (
 	github.com/daviddengcn/go-colortext v1.0.0 // indirect
+	github.com/dixonwille/wlog/v3 v3.0.1 // indirect
 	github.com/dixonwille/wmenu v4.0.2+incompatible // indirect
+	github.com/dixonwille/wmenu/v5 v5.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-playground/form/v4 v4.2.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

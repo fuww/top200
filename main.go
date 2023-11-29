@@ -1,17 +1,12 @@
 package main
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"io"
+	"fmt"
 	"log"
-	"os"
-	"time"
+	"strings"
 
-	polygon "github.com/polygon-io/client-go/rest"
-	"github.com/polygon-io/client-go/rest/models"
-
+	"github.com/dixonwille/wmenu/v5"
+	"github.com/fuww/top200/api"
 	"github.com/joho/godotenv"
 )
 
@@ -26,7 +21,38 @@ func init() {
 
 func main() {
 
-	POLYGON_API_KEY := os.Getenv("POLYGON_API_KEY")
+	menu := wmenu.NewMenu("What would you like to do?")
+
+	menu.Action(func(opts []wmenu.Opt) error { handleFunc(opts); return nil })
+
+	menu.Option("List US stock marketcaps", 0, true, nil)
+	menu.Option("List EU stock marketcaps", 1, false, nil)
+	menuerr := menu.Run()
+
+	if menuerr != nil {
+		log.Fatal(menuerr)
+	}
+
+}
+
+func handleFunc(opts []wmenu.Opt) {
+
+	ListDetailsEU()
+
+	// switch opts[0].Value {
+
+	// case 0:
+	// 	fmt.Println("Listing US stock marketcaps from Poligon.io ⌛️")
+	// 	ListDetailsUS()
+	// case 1:
+	// 	fmt.Println("Listing EU stock marketcaps from Euronext ⌛️")
+	// 	ListDetailsEU()
+	// case 2:
+	// 	fmt.Println("Quitting application")
+	// }
+}
+
+func ListDetailsUS() {
 
 	tickers := []string{
 		"NKE",
@@ -52,38 +78,43 @@ func main() {
 		"DKS",
 	}
 
-	date := time.Date(2023, 11, 01, 0, 0, 0, 0, time.Local)
-
-	// init client
-	c := polygon.New(POLYGON_API_KEY)
-
-	// Iterate over the slice using a for loop
 	for _, ticker := range tickers {
-		params := models.GetTickerDetailsParams{
-			Ticker: ticker,
-		}.WithDate(models.Date(date))
+		printDetails(ticker)
+	}
+}
 
-		// make request
-		r, err := c.GetTickerDetails(context.Background(), params)
+func ListDetailsEU() {
 
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		log.Print(r) // do something with the result
-		// log.Print(r.Results.Ticker)
-
-		filename := r.Results.Ticker + "_" + date.Format("2006-01-02") + "_" + ".json"
-
-		f, e := os.Create("data/" + filename)
-		if e != nil {
-			panic(e)
-		}
-		defer f.Close()
-
-		jsonByte, _ := json.Marshal(r)
-		reader := bytes.NewReader(jsonByte)
-		io.Copy(f, reader)
+	tickers := []string{
+		"NKE",
+		"TJX",
 	}
 
+	for _, ticker := range tickers {
+		printDetailsEU(ticker)
+	}
+}
+
+func printDetailsEU(ticker string) {
+	fmt.Printf("Fetching the marketcap for %v ⌛️\n", ticker)
+	details, err := api.GetDetailsEU(strings.ToUpper(ticker))
+
+	if err != nil {
+		fmt.Println("We coudn't get the details. Error details:")
+		fmt.Println(err)
+	} else {
+		fmt.Printf("The current marketcap of %v is %.0f %v, full name: %v and website: %v \n", details.Ticker, details.MarketCap, strings.ToUpper(details.CurrencyName), details.Name, details.HomepageURL)
+	}
+}
+
+func printDetails(ticker string) {
+	fmt.Printf("Fetching the marketcap for %v ⌛️\n", ticker)
+	details, err := api.GetDetails(strings.ToUpper(ticker))
+
+	if err != nil {
+		fmt.Println("We coudn't get the details. Error details:")
+		fmt.Println(err)
+	} else {
+		fmt.Printf("The current marketcap of %v is %.0f %v, full name: %v and website: %v \n", details.Ticker, details.MarketCap, strings.ToUpper(details.CurrencyName), details.Name, details.HomepageURL)
+	}
 }
